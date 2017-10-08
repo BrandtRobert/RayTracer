@@ -6,6 +6,9 @@ public class Point {
         this.z = z;
     }
 
+    public Vector toVector () {
+        return new Vector(x,y,z);
+    }
     public String toString() {
         return String.format("(%f, %f, %f)", x, y, z);
     }

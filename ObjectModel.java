@@ -1,5 +1,3 @@
-import java.util.LinkedHashSet;
-import java.util.Set;
 import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -7,16 +5,17 @@ import org.ejml.simple.SimpleMatrix;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+
 public class ObjectModel {
   // The set abstraction is used, because theoretically two equal vertices does nothing.
   private String name;
   // vertices
   private SimpleMatrix verticesMatrix;
-  private Set<Point> vertices;
+  private List<Point> vertices;
   // vertex normals
   private SimpleMatrix vertexNormalsMatrix;  
-  private Set<Point> vertex_normals;
-  private Set<String> faces;
+  private List<Point> vertex_normals;
+  private List<Face> faces;
   private Boolean smoothing;
   private String tempSaveSmoothing = "";
   private List<String> commentBlock;
@@ -27,9 +26,9 @@ public class ObjectModel {
   public ObjectModel(String fname){
     name = "default";
     smoothing = false;
-    vertices = new LinkedHashSet<Point>();
-    vertex_normals = new LinkedHashSet<Point>();
-    faces = new LinkedHashSet<String>();
+    vertices = new ArrayList<Point>();
+    vertex_normals = new ArrayList<Point>();
+    faces = new ArrayList<Face>();
     commentBlock = new ArrayList<String>(2);    
     InitObjectFromFile(fname, this); // Will side effect state of 'this'
   }
@@ -41,12 +40,16 @@ public class ObjectModel {
     str += "Vertex Normals:\n";
     str += vertexNormalsMatrix.toString();
     str += "Faces:\n";
-    for (String s : this.faces) {
-      str += "\t" + s + "\n";
+    for (Face f : this.faces) {
+      str += "\n" + f + "\n";
     }
     str += "Smoothing: '" + this.smoothing.toString() + "'\n";
     return str;
   }
+
+  /**
+   * Loads a wavefront obj file into the object model
+   */
   private static void InitObjectFromFile(String fname, ObjectModel newObject){
     // cube.obj --> ["cube", "obj"]
     newObject.name = fname;
@@ -81,8 +84,18 @@ public class ObjectModel {
             }
           } else if (lineItems[0].equals("f")) {
             // f 2//1 4//1 1//1
-            // for now ignore face parsing
-            newObject.faces.add(line);
+            // Get the indices for each vertex that makes up the face
+            int av_index = Integer.parseInt(lineItems[1].split("//")[0]);
+            int bv_index = Integer.parseInt(lineItems[2].split("//")[0]);
+            int cv_index = Integer.parseInt(lineItems[3].split("//")[0]);
+            // Save a list to back track what the indices are when you write the file back out
+            int [] indices = {av_index, bv_index, cv_index};
+            // Get the point for each vertex index, have to do -1 because the file is 1 indexed instead of 0 indexed
+            Point av = newObject.vertices.get(av_index - 1);
+            Point bv = newObject.vertices.get(bv_index - 1);
+            Point cv = newObject.vertices.get(cv_index - 1);
+            // Create new face object and it to the list
+            newObject.faces.add(new Face(av, bv, cv, indices));
           } else if (lineItems[0].equals("s")) {
             // I have no idea what the 's' does right now
             newObject.tempSaveSmoothing = line;
@@ -97,6 +110,7 @@ public class ObjectModel {
       // Convert the vertex sets to matrices
       newObject.verticesMatrix = pointSetToMatrix(newObject.vertices);
       newObject.vertexNormalsMatrix = pointSetToMatrix(newObject.vertex_normals);
+
       return;
     } catch (FileNotFoundException e) {
       System.err.printf("The file '%s' does not exist", fname);
@@ -111,7 +125,7 @@ public class ObjectModel {
    * | z ... 0 |
    * | 0 ... 1 |
    */
-  private static SimpleMatrix pointSetToMatrix(Set<Point> PointSet) {
+  private static SimpleMatrix pointSetToMatrix(List<Point> PointSet) {
     // Columns are each vertex, rows are x,y,z
     double[][] data = new double[4][PointSet.size()];
     int i = 0;
@@ -127,6 +141,9 @@ public class ObjectModel {
     return new SimpleMatrix(data);
   }
 
+  /**
+   * Deprecated now, won't be able to write out faces. Have to back track the indexing
+   */
   public void writeToFile(String filename) throws Exception {
     PrintWriter outputWriter = new PrintWriter(new File(filename));
     for (String s : commentBlock) {
@@ -148,8 +165,8 @@ public class ObjectModel {
     // write out the smoothing
     // outputWriter.printf("%s\n", tempSaveSmoothing);
     // Write out the faces
-    for (String f : faces) {
-      outputWriter.println(f);
+    for (Face f : faces) {
+      outputWriter.printf("f %d %d %d\n", f.vertexIndices[0], f.vertexIndices[1], f.vertexIndices[2]);
     }
     outputWriter.close();
   }
@@ -159,5 +176,9 @@ public class ObjectModel {
 
   public void setVerticesMatrix (SimpleMatrix toSet) {
     this.verticesMatrix = toSet;
+  }
+
+  public List<Face> getFaces() {
+    return this.faces;
   }
 }

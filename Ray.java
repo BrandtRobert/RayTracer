@@ -1,12 +1,17 @@
 import java.util.Arrays;
 
 public class Ray {
-    Point origin;
-    Vector direction;
+    private Point origin;
+    private Vector direction;
 
     public Ray (Point p, Vector d) {
         this.origin = p;
         this.direction = d;
+        // Make the direction and normalization the same values to avoid mistakes
+        // We are inforcing that the D vector in P + Dt must be unit length,
+        // Having an endpoint for it is rather meaningless
+        this.direction.direction = this.direction.normalized;
+        this.direction.magnitude = 1;
     }
 
     /**
@@ -24,6 +29,14 @@ public class Ray {
     public String toString () {
         return "Point: "     + origin.toString() + "\n" +
                "Direction: " + Arrays.toString(direction.normalized);
+    }
+
+    public Point getOrigin () {
+        return origin;
+    }
+
+    public Vector getDirection () {
+        return direction;
     }
 
 }

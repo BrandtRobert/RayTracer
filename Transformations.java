@@ -18,6 +18,10 @@ public class Transformations {
    *    - |  0  0  0 1 |
    */
   private static SimpleMatrix rotate3D(Vector Ww, double theta) {
+    if (Ww.equals(new Vector(0,0,0)) || theta == 0) {
+      // If they ask you to rotate about the origin, or rotate 0 degress, just return the identity matrix
+      return SimpleMatrix.identity(4);
+    }
     // Get vector M from the normalized vector rotation_axis
     Vector Mv = getMFromVector(Ww);
     Vector Uv = Mv.crossProduct(Ww);
