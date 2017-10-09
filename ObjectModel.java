@@ -33,6 +33,40 @@ public class ObjectModel {
     InitObjectFromFile(fname, this); // Will side effect state of 'this'
   }
 
+  /**
+   * Builds an object from a 4 x k homogenous matrix representing transoformed vertices
+   *  and another object.
+   */
+  public ObjectModel(SimpleMatrix origin, ObjectModel obj) {
+    name = obj.name;
+    smoothing = obj.smoothing;
+    vertex_normals = obj.vertex_normals;
+    commentBlock = obj.commentBlock;
+    vertices = new ArrayList<Point>();
+    faces = new ArrayList<Face>();
+    verticesMatrix = origin;
+    // Take the SimpleMatrix and construct a new set of faces and vertices
+    for (int i = 0; i < obj.vertices.size(); i++) {
+      double x = origin.get(0, i);
+      double y = origin.get(1, i);
+      double z = origin.get(2, i);
+      Point vertex = new Point (x, y, z);
+      vertices.add(vertex);
+    }
+    // Rearrange all the faces based on the new vertices
+    for (int j = 0; j < obj.faces.size(); j++) {
+      int [] indices = obj.faces.get(j).indices;
+      int xf_index = indices[0];
+      int yf_index = indices[1];
+      int zf_index = indices[2];
+      Point xf = vertices.get(xf_index - 1);
+      Point yf = vertices.get(yf_index - 1);
+      Point zf = vertices.get(zf_index - 1);
+      faces.add(new Face (xf, yf, zf, indices));
+    }
+  }
+
+  @Override
   public String toString() {
     String str = this.name + ":\n" ;
     str += "Vertices:\n";
@@ -170,6 +204,7 @@ public class ObjectModel {
     }
     outputWriter.close();
   }
+
   public SimpleMatrix getVerticesMatrix () {
     return this.verticesMatrix;
   }
@@ -180,5 +215,9 @@ public class ObjectModel {
 
   public List<Face> getFaces() {
     return this.faces;
+  }
+
+  public String getName () {
+    return name;
   }
 }

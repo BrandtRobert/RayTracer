@@ -52,37 +52,41 @@ public class Camera {
     /**
      * Renders a distance heat map for an object with width x height resolution
      */
-    public Image generateImage (ObjectModel renderObject, Sphere sphere, int width, int height) {
+    public Image generateImage (List<Face> faces, List<Sphere> spheres, int width, int height) {
         Image image = new Image(width, height);
         double [][] tValues = new double [width][height];
         // The t max and t min values for the heat map
         double min = Double.MAX_VALUE;
         double max = 0;
-        // For each pixel cast a ray
+        // For each pixel cast a ray, and see what it hits
         for (int i = 0; i < image.height; i++) {
             for (int j = 0; j < image.height; j++) {
                 Ray r = castRay (i, j);
-                double tDistance = 0;
-                // If there is a render object check for intersections on that
-                if (renderObject != null) {
-                    tDistance = intersectTriangle(renderObject, r);
-                    tValues[i][j] = tDistance;
-                    // Check the max and min if t is positive (we found an intersection)
-                    if (tDistance > 0) {
-                        min = Math.min(tDistance, min);
-                        max = Math.max(tDistance, max);
+                double tDistance = Double.MAX_VALUE;
+                double tTemp = 0;
+                // Try to intersect all faces :/ bleh this is gonna take a long ass time .... 
+                for (Face f : faces) {
+                    tTemp = intersectTriangle(f, r);
+                    // If tDistance is not -1 the ray hit something
+                    // We only want the face closest to the camera that the ray hits
+                    if (tTemp >= 0) {
+                        tDistance = Math.min (tTemp, min);
                     }
-                } else if (sphere != null) {
-                    // Otherwise do intersections on a spehre
-                    tDistance = intersectSphere(sphere, r);
-                    tValues[i][j] = tDistance;
-                    if (tDistance > 0) {
-                        min = Math.min(tDistance, min);
-                        max = Math.max(tDistance, max);
+                }
+                // Try to intersect all spheres :/ I am going to be surprised if there's enough memory to render all this shit
+                for (Sphere s : spheres) {
+                    tTemp = intersectSphere(s, r);
+                    // If tDistance is not -1 the ray hit something
+                    // We only want the face closest to the camera that the ray hits
+                    if (tTemp >= 0) {
+                        tDistance = Math.min (tTemp, min);
                     }
-                } else {
-                    // No object to render
-                    return null;
+                }
+                // For each pixel collect the tValue
+                tValues[i][j] = tDistance;
+                if (tDistance >= 0) {
+                    min = Math.min(tDistance, min);
+                    max = Math.max(tDistance, max);
                 }
             }
         }
@@ -110,40 +114,38 @@ public class Camera {
     /**
      * Performs ray triangle intersection and returns the distance from the pixel to the triangle.
      */
-    private double intersectTriangle (ObjectModel object, Ray ray) {
-        for (Face f : object.getFaces()) {
-            // Before solving check to see if the triangle and ray are parallel
-            Vector AC = new Vector (ray.A, ray.C);
-            Vector AB = new Vector (ray.A, ray.B);
-            // If the ray direction is orthogonal to the normal vector of the plane defined by vectors
-            // AB and AC, then the ray is parallel to the triangle
-            if (AC.crossProduct(AB).dotProduct(ray.getDirection()) != 0) {
-                // Solve the matrix equation
-                // Mx = Y
-                SimpleMatrix Mm = generateM (f, ray.getDirection());
-                SimpleMatrix Ym = generateY (f, ray.getOrigin());
-                /**
-                 * The solution matrix is in the form
-                 * | B | - B is beta
-                 * | Y | - Y is gamma
-                 * | t | - t is the distance to the face plane
-                 */
-                SimpleMatrix solution = Mm.invert().mult(Ym);
-                double beta = solution.get(0,0);
-                double gamma = solution.get(1,0);
-                double t = solution.get(2,0);
-                // If B & Y <= 0, t > 0, and beta + gamma <= 1
-                // Then the ray intersects the triangle
-                if (beta >= 0 && gamma >= 0 && t > 0) {
-                    if ((beta + gamma <= 1)) {
-                        return t;
-                    }
+    private double intersectTriangle (Face face, Ray ray) {
+        // Before solving check to see if the triangle and ray are parallel
+        Vector AC = new Vector (face.A, face.C);
+        Vector AB = new Vector (face.A, face.B);
+        // If the ray direction is orthogonal to the normal vector of the plane defined by vectors
+        // AB and AC, then the ray is parallel to the triangle
+        if (AC.crossProduct(AB).dotProduct(ray.getDirection()) != 0) {
+            // Solve the matrix equation
+            // Mx = Y
+            SimpleMatrix Mm = generateM (face, ray.getDirection());
+            SimpleMatrix Ym = generateY (face, ray.getOrigin());
+            /**
+             * The solution matrix is in the form
+             * | B | - B is beta
+             * | Y | - Y is gamma
+             * | t | - t is the distance to the face plane
+             */
+            SimpleMatrix solution = Mm.invert().mult(Ym);
+            double beta = solution.get(0,0);
+            double gamma = solution.get(1,0);
+            double t = solution.get(2,0);
+            // If B & Y <= 0, t > 0, and beta + gamma <= 1
+            // Then the ray intersects the triangle
+            if (beta >= 0 && gamma >= 0 && t > 0) {
+                if ((beta + gamma <= 1)) {
+                    return t;
                 }
             }
         }
-        // We were unable to find an intersection
-        // Return a negative 1 so the calling functions knows we didn't find anything
-        return 0;
+    // We were unable to find an intersection
+    // Return a negative 1 so the calling functions knows we didn't find anything
+    return 0;
     }
 
     /**

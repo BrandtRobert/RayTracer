@@ -1,6 +1,6 @@
 import org.ejml.simple.SimpleMatrix;
 
-public class Transformations {
+public class Translator {
   /**
    * Rotates the object about the rotation axis by theta degrees
    * Make z the axis of rotation, rotate about z, restore the original axis
