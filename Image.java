@@ -1,5 +1,9 @@
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.io.File;
+import org.ejml.simple.SimpleMatrix;
+
+import javafx.beans.property.SimpleMapProperty;
 
 public class Image {
     /**
@@ -42,12 +46,17 @@ public class Image {
      */
     public Image createHeatMap(double [][] tValues, double max, double min) {
         for (int i = 0; i < tValues.length; i++) {
-            for (int j = 0; j < tValues.length; j++) {
+            for (int j = 0; j < tValues[0].length; j++) {
                 double t = tValues[i][j];
-                double ratio = 2 * (t - min) / (max - min);
-                int r = Math.round(Math.max(0, 255*(1 - ratio)));
-                int b = Math.round(Math.max(0, 255*(ratio - 1)));
-                int g = 255 - b - r;
+                int r = 255;
+                int g = 255;
+                int b = 255;
+                if (t >= 0) {
+                    double ratio = 2 * (t - min) / (max - min);
+                    r = (int) Math.round(Math.max(0, 255*(1 - ratio)));
+                    b = (int) Math.round(Math.max(0, 255*(ratio - 1)));
+                    g = 255 - b - r;
+                }
                 int [] pixel = {r, g, b};
                 this.setPixel(i, j, pixel);
             }
@@ -61,25 +70,32 @@ public class Image {
      * https://en.wikipedia.org/wiki/Netpbm_format#PPM_example
      */
     public void writeToFile (String filename) {
-        PrintWriter outFile = new PrintWriter (new File(filename));
-        /**
-         * The header looks like this:
-         * P3
-         * <width> <height> <max pixel value>
-         */
-        outFile.println("P3");
-        outFile.printf("%d %d %d\n", this.width, this.height, 255);
-        // Output each pixel
-        for (int i = 0; i < tValues.length; i++) {
-            for (int j = 0; j < tValues.length; j++) {
-                outFile.print(this.pixels[i][j].toString() + " ");
+        try {        
+            PrintWriter outFile = new PrintWriter (new File(filename));
+            /**
+             * The header looks like this:
+             * P3
+             * <width> <height> <max pixel value>
+             */
+            outFile.println("P3");
+            outFile.printf("%d %d %d\n", this.width, this.height, 255);
+            // Lazy way of avoiding the fact that everything is rotated right is to rotate it left
+            // Output each pixel
+            for (int i = this.height - 1; i >= 0; i--) {
+                for (int j = 0; j < this.width; j++) {
+                    outFile.print(this.pixels[i][j].toString() + " ");
+                }
+                // Print a new line after width number of pixels
+                outFile.println();
             }
-            // Print a new line after width number of pixels
-            outFile.println();
+            outFile.close();
+        } catch (Exception e) {
+            System.err.println("Failed to output image file");
+            System.err.println(e);
+            return;
         }
-        outFile.close();
     }
-    
+
     /**
      * Sets a pixel at the specified index
      */

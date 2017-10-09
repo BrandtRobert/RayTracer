@@ -1,3 +1,4 @@
+import java.util.Arrays;
 /**
  * A face consists of three points that represent a planar triangle in 3d space
  */
@@ -14,6 +15,11 @@ public class Face {
 
     @Override
     public String toString() {
-        return String.format("A: %s\nB: %s\nC: %s", A.toString(), B.toString(), C.toString());
+        return String.format("A: %s\nB: %s\nC: %s\nIndices: %s", A.toString(), B.toString(), 
+                C.toString(), Arrays.toString(vertexIndices));
+    }
+
+    public int [] getIndices () {
+        return vertexIndices;
     }
 }

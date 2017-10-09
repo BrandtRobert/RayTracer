@@ -1,4 +1,7 @@
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import org.ejml.simple.SimpleMatrix;
 
 /**
  * Defines a camera in 3d space
@@ -32,14 +35,14 @@ public class Camera {
     public Camera (Point e, Point l, Vector up, double [] bnd, double near) {
         eyePoint = e;
         lookatPoint = l;
-        this.near = -Math.abs(near);
+        this.near = - Math.abs(near);
         // head minus tail rule, this draws a vector from l to e
-        viewPlaneNormal(l, e);
+        viewPlaneNormal = new Vector (l, e);
         upVector = up;
         // Bnds should be 4 values
         if (bnd.length > 4) {
             System.err.println("Bounds provided contain too many values, taking the first 4");
-            bnd = Arrays.copyOfRange(bnds, 0, 4);
+            bnd = Arrays.copyOfRange(bnd, 0, 4);
         }
         left = bnd[0];
         bottom = bnd[1];
@@ -47,6 +50,11 @@ public class Camera {
         top = bnd[3];
         Uv = up.crossProduct(viewPlaneNormal);
         Vv = viewPlaneNormal.crossProduct(Uv);
+        Vector temp = Uv;
+        Uv = Vv;
+        Vv = temp;
+        Uv.direction = Uv.normalized;
+        Vv.direction = Vv.normalized;
     }
 
     /**
@@ -54,24 +62,28 @@ public class Camera {
      */
     public Image generateImage (List<Face> faces, List<Sphere> spheres, int width, int height) {
         Image image = new Image(width, height);
-        double [][] tValues = new double [width][height];
+        double [][] tValues = new double [height][width];
         // The t max and t min values for the heat map
         double min = Double.MAX_VALUE;
         double max = 0;
         // For each pixel cast a ray, and see what it hits
         for (int i = 0; i < image.height; i++) {
-            for (int j = 0; j < image.height; j++) {
-                Ray r = castRay (i, j);
-                double tDistance = Double.MAX_VALUE;
+            for (int j = 0; j < image.width; j++) {
+                Ray r = castRay (i, j, width, height);
+                boolean rayCollided = false;
                 double tTemp = 0;
+                double closestObj = Double.MAX_VALUE;
                 // Try to intersect all faces :/ bleh this is gonna take a long ass time .... 
+                int faceCount = 1;
                 for (Face f : faces) {
                     tTemp = intersectTriangle(f, r);
                     // If tDistance is not -1 the ray hit something
                     // We only want the face closest to the camera that the ray hits
                     if (tTemp >= 0) {
-                        tDistance = Math.min (tTemp, min);
+                        rayCollided = true;
+                        closestObj = Math.min (tTemp, closestObj);
                     }
+                    faceCount++;
                 }
                 // Try to intersect all spheres :/ I am going to be surprised if there's enough memory to render all this shit
                 for (Sphere s : spheres) {
@@ -79,27 +91,31 @@ public class Camera {
                     // If tDistance is not -1 the ray hit something
                     // We only want the face closest to the camera that the ray hits
                     if (tTemp >= 0) {
-                        tDistance = Math.min (tTemp, min);
+                        rayCollided = true;
+                        closestObj = Math.min (tTemp, closestObj);
                     }
                 }
                 // For each pixel collect the tValue
-                tValues[i][j] = tDistance;
-                if (tDistance >= 0) {
-                    min = Math.min(tDistance, min);
-                    max = Math.max(tDistance, max);
+                // If no collision make the value -1
+                tValues[i][j] = (rayCollided)? closestObj : -1;
+
+                if (rayCollided) {
+                    min = Math.min(min, closestObj);
+                    max = Math.max(max, closestObj);
                 }
             }
         }
+System.out.printf("Max: %.2f Min: %.2f\n", max, min);
         return image.createHeatMap(tValues, max, min);
     }
 
     /**
      * Returns an ray cast from the eye point onto a pixel i, j in the image plane
      */
-    private Ray castRay (double i, double j) {
+    private Ray castRay (double i, double j, double width, double height) {
         // Get the pixel value i,j on the image plane in world coordinates
-        double x = ((i / width - 1) * (right - left)) + left;
-        double y = ((i / height - 1) * (top - bottom)) + bottom;
+        double x = (i / (width - 1)) * (right - left) + left;
+        double y = (j / (height - 1)) * (top - bottom) + bottom;
         // Pixelpt = Eye + near * Wv (viewplaneNormal) + x * Uv + y * Vv
         Vector W = viewPlaneNormal.scale(near); // near * Wv
         Vector Uscaled = Uv.scale(x);           // x * Uv
@@ -108,7 +124,8 @@ public class Camera {
         // A ray is a point and direction
         Point pixelPoint = eyeVect.add(W).add(Uscaled).add(Vscaled).toPoint();
         Vector direction = new Vector (eyePoint, pixelPoint);
-        return new Ray (pixelPoint, direction);
+        Ray newRay = new Ray (pixelPoint, direction);
+        return newRay;
     }
 
     /**
@@ -145,7 +162,7 @@ public class Camera {
         }
     // We were unable to find an intersection
     // Return a negative 1 so the calling functions knows we didn't find anything
-    return 0;
+    return -1;
     }
 
     /**
@@ -199,16 +216,29 @@ public class Camera {
         // The length of c is the magnitude of ray origin to the center of the sphere
         double cSquared = rayOriginToCenter.dotProduct(rayOriginToCenter);
         // d = sqrt (r^2 - (c^2 - v^2))
-        double d = Math.sqrt((sphere.getRadius() * sphere.getRadius()) - (cSquared - vSquared));
-
+        double dSquared = (sphere.getRadius() * sphere.getRadius()) - (cSquared - vSquared);
         // If d == 0 the ray hits the center of the spehere, otherwise if it is greater than 0
-        // The ray hits some part of the sphere
-        if (d >= 0) {
+        //  the ray hits some part of the sphere        
+        if (dSquared >= 0) {
+            double d = Math.sqrt(dSquared);
             // v - d is the distance from the ray origin to when it first intersects the sphere
             return v - d;
         }
         // If d < 0 then the ray doesn't intersect the sphere
-        return 0;
+        return -1;
+    }
+
+    public String toString() {
+        String s = "";
+        s += String.format("Eye: %s\n", eyePoint.toString());
+        s += String.format("Lookat: %s\n", lookatPoint.toString());
+        s += String.format("Up vector: %s\n", upVector.toString());
+        s += String.format("VPN: %s\n", viewPlaneNormal.toString());
+        s += String.format("Bounds: [Left %.1f, Bottom %.1f, Right %.1f, Top %.1f]\n", left, bottom, right, top);
+        s += String.format("Near: %.1f\n", near);
+        s += String.format("Uv: %s\n", Uv.toString());
+        s += String.format("Vv: %s\n", Vv.toString());
+        return s;
     }
 
 }

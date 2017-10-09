@@ -20,9 +20,9 @@ public class Ray {
      */
     public Point scale (double t) {
         double x, y, z;
-        x = t * direction.normalize[0];
-        y = t * direction.normalize[1];
-        z = t * direction.normalize[2];
+        x = t * direction.normalized[0];
+        y = t * direction.normalized[1];
+        z = t * direction.normalized[2];
         return new Point(x, y, z);
     }
 

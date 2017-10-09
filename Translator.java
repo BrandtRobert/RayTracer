@@ -26,7 +26,7 @@ public class Translator {
     Vector Mv = getMFromVector(Ww);
     Vector Uv = Mv.crossProduct(Ww);
     Vector Vv = Ww.crossProduct(Uv);
-    SimpleMatrix Rm = Transformations.vectorsToMatrix(Uv, Vv, Ww);
+    SimpleMatrix Rm = vectorsToMatrix(Uv, Vv, Ww);
     SimpleMatrix Zm = constructZrotation(theta);
     return Rm.transpose().mult(Zm).mult(Rm);
   }

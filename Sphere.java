@@ -17,4 +17,8 @@ public class Sphere {
     public double getRadius () {
         return radius;
     }
+
+    public String toString () {
+        return String.format("Center: %s\nRadius: %.2f", center, radius);
+    }
  }

@@ -11,13 +11,13 @@ public class Vector {
   public Vector (double x, double y, double z) {
     double [] temp = {x, y, z};
     this.direction = temp;
-    double tempSum = 0;
     normalize();
   }
   /**
    * Gets the magnitude and creates the normalized vector
    */
-  public normalize() {
+  public void normalize() {
+    double tempSum = 0;
     // Get the magnitude and unit length vector
     for (int i = 0; i < direction.length; i++) {
       tempSum += Math.pow(direction[i], 2);
@@ -28,6 +28,9 @@ public class Vector {
       double [] zeroVect = {0, 0, 0};
       this.normalized = zeroVect;
     } else {
+      double x = direction[0];
+      double y = direction[1];
+      double z = direction[2];
       double [] temp2 = {x/magnitude, y/magnitude, z/magnitude};
       this.normalized = temp2;
     }
@@ -79,27 +82,27 @@ public class Vector {
    * Returns the result of adding the two vectors
    */
   public Vector add(Vector other) {
-    double x = this.direction[x] + other.direction[x];
-    double y = this.direction[y] + other.direction[y];
-    double z = this.direction[z] + other.direction[z];
+    double x = this.direction[0] + other.direction[0];
+    double y = this.direction[1] + other.direction[1];
+    double z = this.direction[2] + other.direction[2];
     return new Vector (x,y,z);
   }
   /**
    * Returns the result of subtracting the two vectors
    */
   public Vector subtract(Vector other) {
-    double x = this.direction[x] - other.direction[x];
-    double y = this.direction[y] - other.direction[y];
-    double z = this.direction[z] - other.direction[z];
+    double x = this.direction[0] - other.direction[0];
+    double y = this.direction[1] - other.direction[1];
+    double z = this.direction[2] - other.direction[2];
     return new Vector (x,y,z);
   }
   /**
    * Returns a result of a scaled vector
    */
   public Vector scale(double s) {
-    double x = this.direction[0] * s;
-    double y = this.direction[1] * s;
-    double z = this.direction[2] * s;
+    double x = this.normalized[0] * s;
+    double y = this.normalized[1] * s;
+    double z = this.normalized[2] * s;
     return new Vector(x,y,z);
   }
 

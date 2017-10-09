@@ -55,7 +55,7 @@ public class ObjectModel {
     }
     // Rearrange all the faces based on the new vertices
     for (int j = 0; j < obj.faces.size(); j++) {
-      int [] indices = obj.faces.get(j).indices;
+      int [] indices = obj.faces.get(j).getIndices();
       int xf_index = indices[0];
       int yf_index = indices[1];
       int zf_index = indices[2];
@@ -147,7 +147,8 @@ public class ObjectModel {
 
       return;
     } catch (FileNotFoundException e) {
-      System.err.printf("The file '%s' does not exist", fname);
+      System.err.printf("The file '%s' does not exist\n", fname);
+      System.err.println(e);
       newObject = null;
       return;
     }

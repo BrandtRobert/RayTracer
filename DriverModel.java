@@ -17,21 +17,27 @@ public class DriverModel {
         }
     }
 
-    public DriverModel () {
+    public DriverModel (String fname) {
         transformations = new ArrayList<Transformation>();
         spheres = new ArrayList<Sphere>();
+        try {
+            loadDriverFile(fname);
+        } catch (Exception e) {
+            System.err.println ("Failed to load driver file");
+            System.err.println (e);
+        }
     }
 
-    public void loadDriverFile (String filename) throws Exception {
+    private void loadDriverFile (String filename) throws Exception {
         File driverFile = new File(filename);
         if (driverFile.length() == 0) {
             throw new InvalidModelException("File empty!");
         }
         Scanner fileReader = new Scanner(driverFile);
         // Define values needed for the Camera Model
-        Point eye, lookat;
-        double right, left, bottom, top, near;
-        Vector upVector;
+        Point eye = null, lookat = null;
+        double right = 0, left = 0, bottom = 0, top = 0, near = 0;
+        Vector upVector = null;
 
         // For creating points
         double x, y, z;
@@ -51,7 +57,7 @@ public class DriverModel {
                     double radius = Double.parseDouble(lineItems[4]);
                     Point center = new Point (x, y, z);
                     spheres.add(new Sphere(center, radius));
-                } else if (linesItems[0].equals("eye")) {
+                } else if (lineItems[0].equals("eye")) {
                     x = Double.parseDouble(lineItems[1]);
                     y = Double.parseDouble(lineItems[2]);
                     z = Double.parseDouble(lineItems[3]);
@@ -74,7 +80,7 @@ public class DriverModel {
                     bottom = Double.parseDouble(lineItems[2]);
                     right = Double.parseDouble(lineItems[3]);
                     top = Double.parseDouble(lineItems[4]);
-                } else if (linesItems[0].equals("res")) {
+                } else if (lineItems[0].equals("res")) {
                     resWidth = Integer.parseInt(lineItems[1]);
                     resHeight = Integer.parseInt(lineItems[2]);
                 } else {
@@ -84,7 +90,7 @@ public class DriverModel {
         }
         fileReader.close();
         double [] bnds = {left, bottom, right, top};
-        this.camera = new Camera (eye, lookat, upVector, bnds, near);
+        cameraModel = new Camera (eye, lookat, upVector, bnds, near);
     }
 
     private Transformation transformationFromLineItems (String [] lineItems) {
