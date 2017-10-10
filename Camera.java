@@ -50,9 +50,9 @@ public class Camera {
         top = bnd[3];
         Uv = up.crossProduct(viewPlaneNormal);
         Vv = viewPlaneNormal.crossProduct(Uv);
-        Vector temp = Uv;
-        Uv = Vv;
-        Vv = temp;
+        // Vector temp = Uv;
+        // Uv = Vv;
+        // Vv = temp;
         Uv.direction = Uv.normalized;
         Vv.direction = Vv.normalized;
     }
@@ -74,7 +74,6 @@ public class Camera {
                 double tTemp = 0;
                 double closestObj = Double.MAX_VALUE;
                 // Try to intersect all faces :/ bleh this is gonna take a long ass time .... 
-                int faceCount = 1;
                 for (Face f : faces) {
                     tTemp = intersectTriangle(f, r);
                     // If tDistance is not -1 the ray hit something
@@ -83,7 +82,6 @@ public class Camera {
                         rayCollided = true;
                         closestObj = Math.min (tTemp, closestObj);
                     }
-                    faceCount++;
                 }
                 // Try to intersect all spheres :/ I am going to be surprised if there's enough memory to render all this shit
                 for (Sphere s : spheres) {
