@@ -7,7 +7,7 @@ Use the following command, adding in what driver file to run:
   * *I did this because sometimes the library wouldn't load properly, to run several driver files more effeciently comment out that line*
 
 `
-  ./run.sh 'driverfile.txt'
+  ./run.sh 'driverfile.txt' 'outputfile.txt'
 `
 
 **Important Notes**
@@ -23,7 +23,7 @@ rm *.class
 rm -rf ./org
 jar -xvf EJML.jar
 # Compile with the libraries in the classpath
-javac -cp "./org/ejml/*:." Modeltoworld.java
+javac -cp "./EJMl.jar:." Raytracer.java
 # Run the program
-java Modeltoworld 'driverfile.txt'
+java Raytracer 'driverfile.txt' 'outputfile.txt'
 `

@@ -62,13 +62,13 @@ public class Camera {
      */
     public Image generateImage (List<Face> faces, List<Sphere> spheres, int width, int height) {
         Image image = new Image(width, height);
-        double [][] tValues = new double [height][width];
+        double [][] tValues = new double [width][height];
         // The t max and t min values for the heat map
         double min = Double.MAX_VALUE;
         double max = 0;
         // For each pixel cast a ray, and see what it hits
-        for (int i = 0; i < image.height; i++) {
-            for (int j = 0; j < image.width; j++) {
+        for (int i = 0; i < image.width; i++) {
+            for (int j = 0; j < image.height; j++) {
                 Ray r = castRay (i, j, width, height);
                 boolean rayCollided = false;
                 double tTemp = 0;

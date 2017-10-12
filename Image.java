@@ -3,8 +3,6 @@ import java.util.Arrays;
 import java.io.File;
 import org.ejml.simple.SimpleMatrix;
 
-import javafx.beans.property.SimpleMapProperty;
-
 public class Image {
     /**
      * Just an abstraction for an rgb triple
@@ -33,7 +31,6 @@ public class Image {
     public Image (int width, int height) {
         this.width = width;
         this.height = height;
-        pixels = new Pixel[height][width];
     }
 
     /**
@@ -45,6 +42,11 @@ public class Image {
      * g = 255 - b - r 
      */
     public Image createHeatMap(double [][] tValues, double max, double min) {
+        tValues = verticalMirror(transposeMatrix(tValues));
+        // Yeah you have to reset these i don't even care anymore
+        this.width = tValues[0].length;
+        this.height = tValues.length;
+        pixels = new Pixel[height][width];
         for (int i = 0; i < tValues.length; i++) {
             for (int j = 0; j < tValues[0].length; j++) {
                 double t = tValues[i][j];
@@ -64,6 +66,21 @@ public class Image {
         return this;
     }
 
+    private static double[][] transposeMatrix(double [][] m){
+        double[][] temp = new double[m[0].length][m.length];
+        for (int i = 0; i < m.length; i++)
+            for (int j = 0; j < m[0].length; j++)
+                temp[j][i] = m[i][j];
+        return temp;
+    }
+
+    private static double[][] verticalMirror(double [][] m) {
+        double[][] temp = new double[m.length][m[0].length];
+        for (int i = m.length - 1, k = 0; i >= 0; i--, k++)
+            for (int j = 0; j < m[0].length; j++)
+                temp[k][j] = m[i][j];
+        return temp;
+    }
     /**
      * Writes this image to an output file of a given name.
      * Format is ACSII PPM:
@@ -81,7 +98,8 @@ public class Image {
             outFile.printf("%d %d %d\n", this.width, this.height, 255);
             // Lazy way of avoiding the fact that everything is rotated right is to rotate it left
             // Output each pixel
-            for (int i = this.height - 1; i >= 0; i--) {
+            // for (int i = this.height - 1; i >= 0; i--) {
+            for (int i = 0; i < this.height; i++) {
                 for (int j = 0; j < this.width; j++) {
                     outFile.print(this.pixels[i][j].toString() + " ");
                 }
