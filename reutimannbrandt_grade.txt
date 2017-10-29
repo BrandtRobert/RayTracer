@@ -1,0 +1,18 @@
+ID:  	reutimannbrandt
+Score:	97.96875
+Graded: True
+Note:
+	3.96875	Test: driver02: 1 pixel(s) do(es) not match.
+	10.0	Test: driver03:  passed.
+	30.0	Test: driver00:  passed.
+	5.0	Test: driver01:  passed.
+	3.0	Test: driver06:  passed.
+	3.0	Test: driver07:  passed.
+	5.0	Test: driver04:  passed.
+	4.0	Test: driver05:  passed.
+	3.0	Test: driver08:  passed.
+	3.0	Test: driver09:  passed.
+	20	At least one ray-triangle or one ray-sphere test case ran.
+	10	Default points for some efforts without necessarily producing outputs
+
+	-2 wrote 255 255 255 in some places instead of 239 239 239

@@ -56,13 +56,14 @@ public class ObjectModel {
     // Rearrange all the faces based on the new vertices
     for (int j = 0; j < obj.faces.size(); j++) {
       int [] indices = obj.faces.get(j).getIndices();
+      Material m = obj.faces.get(j).getMaterial();
       int xf_index = indices[0];
       int yf_index = indices[1];
       int zf_index = indices[2];
       Point xf = vertices.get(xf_index - 1);
       Point yf = vertices.get(yf_index - 1);
       Point zf = vertices.get(zf_index - 1);
-      faces.add(new Face (xf, yf, zf, indices));
+      faces.add(new Face (xf, yf, zf, indices, m));
     }
   }
 
@@ -87,6 +88,7 @@ public class ObjectModel {
   private static void InitObjectFromFile(String fname, ObjectModel newObject){
     // cube.obj --> ["cube", "obj"]
     newObject.name = fname;
+    Material current_material = null;
     try {
       Scanner fReader = new Scanner(new File(fname));
       int lineCount = 0;
@@ -129,11 +131,14 @@ public class ObjectModel {
             Point bv = newObject.vertices.get(bv_index - 1);
             Point cv = newObject.vertices.get(cv_index - 1);
             // Create new face object and it to the list
-            newObject.faces.add(new Face(av, bv, cv, indices));
+            newObject.faces.add(new Face(av, bv, cv, indices, current_material));
           } else if (lineItems[0].equals("s")) {
             // I have no idea what the 's' does right now
             newObject.tempSaveSmoothing = line;
             // newObject.smoothing = false; ??
+          } else if (lineItems[0].equals("mtllib")) {
+            // Set the current material
+            current_material = Material.fromFile(lineItems[1]);
           } else {
             // unrecognized symbol, ignore
             System.err.printf("Unrecognized symbol '%s' in '%s'\n\tLine %d: %s", lineItems[0], fname, lineCount, line);

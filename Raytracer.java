@@ -15,6 +15,9 @@ public class Raytracer {
         }
         // Read the driver file and fill an array with all faces and spheres 
         DriverModel driver = new DriverModel(driverFname);
+        System.out.println(driver.lights);
+        System.out.println(driver.spheres);
+        /**
         ArrayList<Face> allObjectFaces = new ArrayList<Face>();
         // Perform each translation and add it to the list of total faces
         for (Transformation t : driver.transformations) {
@@ -30,5 +33,6 @@ public class Raytracer {
         Image img = driver.cameraModel.generateImage(allObjectFaces, driver.spheres, driver.resWidth, driver.resHeight);
         System.out.printf("Writing scene to '%s'...\n", outputFname);
         img.writeToFile(outputFname);
+        */
     }
 }
