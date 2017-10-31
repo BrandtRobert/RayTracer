@@ -66,7 +66,6 @@ public class Camera {
         // For each pixel cast a ray, and see what it hits
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-//                Ray r = castRay (i, height - j - 1, width, height);
             	Ray r = castRay (i, j , width, height);
                 boolean rayCollided = false;
                 // Try to intersect all faces :/ bleh this is gonna take a long ass time .... 
@@ -84,6 +83,7 @@ public class Camera {
                 // If we got a collision calculate the color
                 if (rayCollided) {
                     Vector surfaceNormal;
+                    Material objMaterial;
                     Point surfacePt = r.getClosestPoint();
                     Object closestObj = r.getClosestObj();
                     // Color the closest object
@@ -93,7 +93,7 @@ public class Camera {
                         Point c = s.getCenter();
                         surfaceNormal = new Vector (c, surfacePt);
                         surfaceNormal.direction = surfaceNormal.normalized;
-                        pixelMap [i][j] = colorPixel (r, s.getMaterial(), surfaceNormal, lights, ambient, false);                 
+                        objMaterial = s.getMaterial();
                     } else {
                         // Get normal for a face
                         Face face = (Face) closestObj;
@@ -101,8 +101,9 @@ public class Camera {
                         Vector AB = new Vector (face.A, face.B);
                         surfaceNormal = AC.crossProduct(AB);
                         surfaceNormal.direction = surfaceNormal.normalized;
-                        pixelMap [i][j] = colorPixel (r, face.getMaterial(), surfaceNormal, lights, ambient, true);     
+                        objMaterial = face.getMaterial();  
                     }
+                    pixelMap [i][j] = colorPixel (r, objMaterial, surfaceNormal, lights, ambient);     
                 } else {
                     // If no intersection color the pixel black
                     pixelMap [i][j] = new RGB(0,0,0);
@@ -141,32 +142,40 @@ public class Camera {
      *          R = (2 * surface_norm.dot(light_vect)) * surface_norm - light_vect
      *          mat_spec * light_brightness * (camera_vect.dot(R))^phong_const
      */
-    private RGB colorPixel (Ray ray, Material material, Vector surfaceNormal, List<Light> lights, Light ambient, boolean isFace) {
+    private RGB colorPixel (Ray ray, Material material, Vector surfaceNormal, List<Light> lights, Light ambient) {
         // Ambient
         // ambient * mat_ambient reflection
         RGB color = new RGB (0,0,0);
         if (ambient != null) {
             color = ambient.getColor().pairwiseProduct(material.ambient);
         }
+        // To camera ray is the going back on the horse we rode in on
         Ray toOrig = ray.getReverse();
+        // If the dot product between the camera vector and the surface normal is negative
+        // Then the surface normal is backwards
+        if (toOrig.getDirection().dotProduct(surfaceNormal) < 0) {
+        	surfaceNormal = surfaceNormal.getReverse();
+        } 	
         for (Light l : lights) {
             Vector toLightVect = new Vector (ray.getClosestPoint(), l.getPosition());
             Ray toLight = new Ray (ray.getClosestPoint(), toLightVect);
             double lDotNorm = toLight.getDirection().dotProduct(surfaceNormal);
-            // Flip the surface normal on a face if there is a negative cos between the light vect and the surface normal
-            if (isFace && (lDotNorm < 0)) {
-                surfaceNormal = surfaceNormal.getReverse();
-                lDotNorm = toLight.getDirection().dotProduct(surfaceNormal);
-            }
             // Only calculate the illumination if the cos (theta) between the light vector and the surface normal
-            // Is non-negative and non-zero
+            // Is non-negative and non-zero, as a negative cos would denote the light as behind the surface
             if (lDotNorm > 0) {
+            	// Calculate diffuse reflection
                 color = color.add(material.diffuse.pairwiseProduct(l.getColor()).scale(lDotNorm));
+                // Get the unit length vector for the reflection
                 Vector spR = surfaceNormal.scale(2 * lDotNorm);
                 spR = spR.subtract(toLight.getDirection());
+                spR.makeUnitLength();
+                // Check the angle between the camera vector and the reflection vector
                 double origDotR = toOrig.getDirection().dotProduct(spR);
-                double cdPhong = Math.pow(origDotR, material.phong);
-                color = color.add(material.specular.pairwiseProduct(l.getColor()).scale(cdPhong));
+                // Only calculate phong reflection if the angle between the two is less than 90 degrees
+                if (origDotR > 0) {
+	                double cdPhong = Math.pow(origDotR, material.phong);
+	                color = color.add(material.specular.pairwiseProduct(l.getColor()).scale(cdPhong));
+                }
             }
         }
         return color;

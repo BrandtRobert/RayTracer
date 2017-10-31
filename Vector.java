@@ -36,7 +36,14 @@ public class Vector {
       this.normalized = temp2;
     }
   }
-
+  
+  /**
+   * Makes this vector unit length
+   */
+  public void makeUnitLength () {
+	  this.direction = this.normalized;
+  }
+ 
   /**
    * Creates a vector pointing from the origin to the given point
    */

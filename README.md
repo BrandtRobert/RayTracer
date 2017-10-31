@@ -12,9 +12,8 @@ Use the following command, adding in what driver file to run:
 
 **Important Notes**
 
-1. The ppm files may not match exactly because of the precision of floating point operations, and how vector normals are calculated.
-	In future versions I intend to calculate vector normals by using a weighted average of the normals give in the .obj file.
-2. The models and materials files must live in a directory called "drivers_models" in the same working directory as the Raytracer.java, otherwise the program won't find them
+1. The ppm files may not match exactly because of the precision of floating point operations, and how vector normals are calculated. In future versions I intend to calculate vector normals by using a weighted average of the normals give in the .obj file.
+2. The models, materials, and driver files must be in the SAME WORKING DIRECTORY as the ray tracer class.
 3. If the run.sh script isn't working, you should be able to compile with these commands:
 
 `
