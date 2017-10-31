@@ -16,9 +16,9 @@ public class RGB {
     public RGB pairwiseProduct (RGB other) {
         double r,g,b;
         r = this.red * other.red;
+        g = this.green * other.green;        
         b = this.blue * other.blue;
-        g = this.green * other.green;
-        return new RGB (r,b,g);
+        return new RGB (r,g,b);
     }
 
     /**
@@ -27,17 +27,17 @@ public class RGB {
     public RGB scale (double s) {
         double r,g,b;
         r = this.red * s;
-        b = this.blue * s;
         g = this.green * s;
-        return new RGB (r,b,g);
+        b = this.blue * s;
+        return new RGB (r,g,b);
     }
 
     public RGB add (RGB other) {
         double r,g,b;
         r = this.red + other.red;
-        b = this.blue + other.blue;
         g = this.green + other.green;
-        return new RGB (r,b,g);
+        b = this.blue + other.blue;
+        return new RGB (r,g,b);
     }
 
     public String toString () {

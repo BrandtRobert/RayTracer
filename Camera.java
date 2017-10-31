@@ -61,11 +61,13 @@ public class Camera {
      * Renders a distance heat map for an object with width x height resolution
      */
     public Image generateImage (List<Face> faces, List<Sphere> spheres, List<Light> lights, Light ambient, int width, int height) {
+        Image img = new Image (width, height);
         RGB [][] pixelMap = new RGB [width][height];
         // For each pixel cast a ray, and see what it hits
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                Ray r = castRay (i, j, width, height);
+//                Ray r = castRay (i, height - j - 1, width, height);
+            	Ray r = castRay (i, j , width, height);
                 boolean rayCollided = false;
                 // Try to intersect all faces :/ bleh this is gonna take a long ass time .... 
                 for (Face f : faces) {
@@ -107,7 +109,7 @@ public class Camera {
                 }
             }
         }
-        return null;
+        return img.mapPixels(pixelMap);
     }
 
     /**
@@ -142,8 +144,11 @@ public class Camera {
     private RGB colorPixel (Ray ray, Material material, Vector surfaceNormal, List<Light> lights, Light ambient, boolean isFace) {
         // Ambient
         // ambient * mat_ambient reflection
-        RGB color = ambient.getColor().pairwiseProduct(material.ambient);
-        Ray toOrig = ray.getReverse();        
+        RGB color = new RGB (0,0,0);
+        if (ambient != null) {
+            color = ambient.getColor().pairwiseProduct(material.ambient);
+        }
+        Ray toOrig = ray.getReverse();
         for (Light l : lights) {
             Vector toLightVect = new Vector (ray.getClosestPoint(), l.getPosition());
             Ray toLight = new Ray (ray.getClosestPoint(), toLightVect);
@@ -157,12 +162,11 @@ public class Camera {
             // Is non-negative and non-zero
             if (lDotNorm > 0) {
                 color = color.add(material.diffuse.pairwiseProduct(l.getColor()).scale(lDotNorm));
-                Vector spR = surfaceNormal.scale((2 * surfaceNormal.dotProduct(toLight.getDirection()))).subtract(toLight.getDirection());
+                Vector spR = surfaceNormal.scale(2 * lDotNorm);
+                spR = spR.subtract(toLight.getDirection());
                 double origDotR = toOrig.getDirection().dotProduct(spR);
-                if (origDotR > 0) {
-                    double cdPhong = Math.pow(origDotR, material.phong);
-                    color = color.add(material.specular.pairwiseProduct(l.getColor()).scale(cdPhong));
-                }
+                double cdPhong = Math.pow(origDotR, material.phong);
+                color = color.add(material.specular.pairwiseProduct(l.getColor()).scale(cdPhong));
             }
         }
         return color;

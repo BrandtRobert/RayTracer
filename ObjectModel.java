@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectModel {
+  private static final String matlib_path = "./drivers_models/";
   // The set abstraction is used, because theoretically two equal vertices does nothing.
   private String name;
   // vertices
@@ -138,7 +139,7 @@ public class ObjectModel {
             // newObject.smoothing = false; ??
           } else if (lineItems[0].equals("mtllib")) {
             // Set the current material
-            current_material = Material.fromFile(lineItems[1]);
+            current_material = Material.fromFile(matlib_path + lineItems[1]);
           } else {
             // unrecognized symbol, ignore
             System.err.printf("Unrecognized symbol '%s' in '%s'\n\tLine %d: %s", lineItems[0], fname, lineCount, line);

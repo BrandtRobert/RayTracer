@@ -27,9 +27,9 @@ public class Ray {
      */
     public Point scale (double t) {
         double x, y, z;
-        x = t * direction.normalized[0];
-        y = t * direction.normalized[1];
-        z = t * direction.normalized[2];
+        x = t * direction.normalized[0] + origin.x;
+        y = t * direction.normalized[1] + origin.y;
+        z = t * direction.normalized[2] + origin.z;
         return new Point(x, y, z);
     }
 
@@ -48,6 +48,10 @@ public class Ray {
 
     public Point getClosestPoint () {
         return scale (closestDist);
+    }
+
+    public double getClosestDist () {
+        return closestDist;
     }
 
     public Object getClosestObj () {

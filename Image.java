@@ -110,9 +110,9 @@ public class Image {
      * Sets a pixel at the specified index
      */
     public void setPixel(int i, int j, RGB pixel) {
-        int r = (int) Math.round(Math.min(255, Math.max(0, pixel.red)));
-        int g = (int) Math.round(Math.min(255, Math.max(0, pixel.green)));
-        int b = (int) Math.round(Math.min(255, Math.max(0, pixel.blue)));
+        int r = (int) Math.round(Math.min(255, Math.max(0, pixel.red * 255)));
+        int g = (int) Math.round(Math.min(255, Math.max(0, pixel.green * 255)));
+        int b = (int) Math.round(Math.min(255, Math.max(0, pixel.blue * 255)));
         pixels[i][j] = new Pixel(r, g, b);
     }
 
