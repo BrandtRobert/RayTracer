@@ -24,6 +24,7 @@ public class Image {
             return r + " " + g + " " + b;
         }
     }
+
     // An image is a 2d array of pixels
     private Pixel [][] pixels;
     public int width, height;
@@ -34,48 +35,32 @@ public class Image {
     }
 
     /**
-     * Uses the tValues to turn the image into a heat map
-     * https://stackoverflow.com/questions/20792445/calculate-rgb-value-for-a-range-of-values-to-create-heat-map
-     * ratio = 2 * (t - tmin) / (tmax - tmin) 
-     * r = max(0, 255 * (1 - ratio)) 
-     * b = max(0, 255 * (ratio - 1)) 
-     * g = 255 - b - r 
+     * Rotate the image into proper place and fill out the pixel values
      */
-    public Image createHeatMap(double [][] tValues, double max, double min) {
-        tValues = verticalMirror(transposeMatrix(tValues));
+    public Image mapPixels(RGB [][] pValues) {
+        pValues = verticalMirror(transposeMatrix(pValues));
         // Yeah you have to reset these i don't even care anymore
-        this.width = tValues[0].length;
-        this.height = tValues.length;
+        this.width = pValues[0].length;
+        this.height = pValues.length;
         pixels = new Pixel[height][width];
-        for (int i = 0; i < tValues.length; i++) {
-            for (int j = 0; j < tValues[0].length; j++) {
-                double t = tValues[i][j];
-                int r = 255;
-                int g = 255;
-                int b = 255;
-                if (t >= 0) {
-                    double ratio = 2 * (t - min) / (max - min);
-                    r = (int) Math.round(Math.max(0, 255*(1 - ratio)));
-                    b = (int) Math.round(Math.max(0, 255*(ratio - 1)));
-                    g = 255 - b - r;
-                }
-                int [] pixel = {r, g, b};
-                this.setPixel(i, j, pixel);
+        for (int i = 0; i < pValues.length; i++) {
+            for (int j = 0; j < pValues[0].length; j++) {
+                this.setPixel(i, j, pValues[i][j]);
             }
         }
         return this;
     }
 
-    private static double[][] transposeMatrix(double [][] m){
-        double[][] temp = new double[m[0].length][m.length];
+    private static RGB[][] transposeMatrix(RGB [][] m){
+        RGB[][] temp = new RGB[m[0].length][m.length];
         for (int i = 0; i < m.length; i++)
             for (int j = 0; j < m[0].length; j++)
                 temp[j][i] = m[i][j];
         return temp;
     }
 
-    private static double[][] verticalMirror(double [][] m) {
-        double[][] temp = new double[m.length][m[0].length];
+    private static RGB[][] verticalMirror(RGB [][] m) {
+        RGB[][] temp = new RGB[m.length][m[0].length];
         for (int i = m.length - 1, k = 0; i >= 0; i--, k++)
             for (int j = 0; j < m[0].length; j++)
                 temp[k][j] = m[i][j];
@@ -120,6 +105,17 @@ public class Image {
     public void setPixel(int i, int j, int[] pixel) {
         pixels[i][j] = new Pixel(pixel[0], pixel[1], pixel[2]);
     }
+
+    /**
+     * Sets a pixel at the specified index
+     */
+    public void setPixel(int i, int j, RGB pixel) {
+        int r = (int) Math.round(Math.min(255, Math.max(0, pixel.red * 255)));
+        int g = (int) Math.round(Math.min(255, Math.max(0, pixel.green * 255)));
+        int b = (int) Math.round(Math.min(255, Math.max(0, pixel.blue * 255)));
+        pixels[i][j] = new Pixel(r, g, b);
+    }
+
     /**
      * Retrieves a pixel from the array
      */

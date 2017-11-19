@@ -7,6 +7,8 @@ public class DriverModel {
 
     List<Transformation> transformations;
     List<Sphere> spheres;
+    Light ambient;
+    List<Light> lights;
     Camera cameraModel;
     int resWidth, resHeight;
 
@@ -20,6 +22,7 @@ public class DriverModel {
     public DriverModel (String fname) {
         transformations = new ArrayList<Transformation>();
         spheres = new ArrayList<Sphere>();
+        lights = new ArrayList<Light>();
         try {
             loadDriverFile(fname);
         } catch (Exception e) {
@@ -55,8 +58,28 @@ public class DriverModel {
                     y = Double.parseDouble(lineItems[2]);
                     z = Double.parseDouble(lineItems[3]);
                     double radius = Double.parseDouble(lineItems[4]);
+                    // Ambient reflection
+                    double ka_red = Double.parseDouble(lineItems[5]);
+                    double ka_green = Double.parseDouble(lineItems[6]);
+                    double ka_blue = Double.parseDouble(lineItems[7]);
+                    RGB ka_reflect = new RGB (ka_red, ka_green, ka_blue);
+                    // Diffuse reflection
+                    double kd_red = Double.parseDouble(lineItems[8]);
+                    double kd_green = Double.parseDouble(lineItems[9]);
+                    double kd_blue = Double.parseDouble(lineItems[10]);
+                    RGB kd_reflect = new RGB (kd_red, kd_green, kd_blue);
+                    // Specular reflection
+                    double ks_red = Double.parseDouble(lineItems[11]);
+                    double ks_green = Double.parseDouble(lineItems[12]);
+                    double ks_blue = Double.parseDouble(lineItems[13]);
+                    RGB ks_reflect = new RGB (ks_red, ks_green, ks_blue);
+                    // Attenuation coordinates
+                    double kr_red = Double.parseDouble(lineItems[14]);
+                    double kr_green = Double.parseDouble(lineItems[15]);
+                    double kr_blue = Double.parseDouble(lineItems[16]);
+                    RGB kr_coeff = new RGB (kr_red, kr_green, kr_blue);                    
                     Point center = new Point (x, y, z);
-                    spheres.add(new Sphere(center, radius));
+                    spheres.add(new Sphere(center, radius, ka_reflect, kd_reflect, ks_reflect, kr_coeff));
                 } else if (lineItems[0].equals("eye")) {
                     x = Double.parseDouble(lineItems[1]);
                     y = Double.parseDouble(lineItems[2]);
@@ -83,6 +106,21 @@ public class DriverModel {
                 } else if (lineItems[0].equals("res")) {
                     resWidth = Integer.parseInt(lineItems[1]);
                     resHeight = Integer.parseInt(lineItems[2]);
+                } else if (lineItems[0].equals("ambient")) {
+                    x = Double.parseDouble(lineItems[1]);
+                    y = Double.parseDouble(lineItems[2]);
+                    z = Double.parseDouble(lineItems[3]);
+                    ambient = new Light (new RGB(x,y,z), null, 0);
+                } else if (lineItems[0].equals("light")) {
+                    x = Double.parseDouble(lineItems[1]);
+                    y = Double.parseDouble(lineItems[2]);
+                    z = Double.parseDouble(lineItems[3]);
+                    double w = Double.parseDouble(lineItems[4]);
+                    double r = Double.parseDouble(lineItems[5]);
+                    double g = Double.parseDouble(lineItems[6]);
+                    double b = Double.parseDouble(lineItems[7]);
+                    Light l = new Light (new RGB(r,g,b), new Point(x,y,z), w);
+                    lights.add(l);
                 } else {
                     throw new InvalidModelException("Unable to recognize phrase '" + lineItems[0] + "'");
                 }

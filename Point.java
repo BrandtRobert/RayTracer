@@ -10,6 +10,6 @@ public class Point {
         return new Vector(x,y,z);
     }
     public String toString() {
-        return String.format("(%f, %f, %f)", x, y, z);
+        return String.format("(%.2f, %.2f, %.2f)", x, y, z);
     }
 }

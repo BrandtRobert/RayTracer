@@ -60,51 +60,57 @@ public class Camera {
     /**
      * Renders a distance heat map for an object with width x height resolution
      */
-    public Image generateImage (List<Face> faces, List<Sphere> spheres, int width, int height) {
-        Image image = new Image(width, height);
-        double [][] tValues = new double [width][height];
-        // The t max and t min values for the heat map
-        double min = Double.MAX_VALUE;
-        double max = 0;
+    public Image generateImage (List<Face> faces, List<Sphere> spheres, List<Light> lights, Light ambient, int width, int height) {
+        Image img = new Image (width, height);
+        RGB [][] pixelMap = new RGB [width][height];
         // For each pixel cast a ray, and see what it hits
-        for (int i = 0; i < image.width; i++) {
-            for (int j = 0; j < image.height; j++) {
-                Ray r = castRay (i, j, width, height);
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+            	Ray r = castRay (i, j , width, height);
                 boolean rayCollided = false;
-                double tTemp = 0;
-                double closestObj = Double.MAX_VALUE;
                 // Try to intersect all faces :/ bleh this is gonna take a long ass time .... 
                 for (Face f : faces) {
-                    tTemp = intersectTriangle(f, r);
-                    // If tDistance is not -1 the ray hit something
-                    // We only want the face closest to the camera that the ray hits
-                    if (tTemp >= 0) {
+                    if (r.intersectTriangle(f) > 0 ){
                         rayCollided = true;
-                        closestObj = Math.min (tTemp, closestObj);
                     }
                 }
                 // Try to intersect all spheres :/ I am going to be surprised if there's enough memory to render all this shit
                 for (Sphere s : spheres) {
-                    tTemp = intersectSphere(s, r);
-                    // If tDistance is not -1 the ray hit something
-                    // We only want the face closest to the camera that the ray hits
-                    if (tTemp >= 0) {
+                    if (r.intersectSphere(s) > 0 ){
                         rayCollided = true;
-                        closestObj = Math.min (tTemp, closestObj);
                     }
                 }
-                // For each pixel collect the tValue
-                // If no collision make the value -1
-                tValues[i][j] = (rayCollided)? closestObj : -1;
-
+                // If we got a collision calculate the color
                 if (rayCollided) {
-                    min = Math.min(min, closestObj);
-                    max = Math.max(max, closestObj);
+                    Vector surfaceNormal;
+                    Material objMaterial;
+                    Point surfacePt = r.getClosestPoint();
+                    Object closestObj = r.getClosestObj();
+                    // Color the closest object
+                    if (closestObj.getClass() == Sphere.class) {
+                        // Get normal for sphere
+                        Sphere s = (Sphere) closestObj;
+                        Point c = s.getCenter();
+                        surfaceNormal = new Vector (c, surfacePt);
+                        surfaceNormal.direction = surfaceNormal.normalized;
+                        objMaterial = s.getMaterial();
+                    } else {
+                        // Get normal for a face
+                        Face face = (Face) closestObj;
+                        Vector AC = new Vector (face.A, face.C);
+                        Vector AB = new Vector (face.A, face.B);
+                        surfaceNormal = AC.crossProduct(AB);
+                        surfaceNormal.direction = surfaceNormal.normalized;
+                        objMaterial = face.getMaterial();  
+                    }
+                    pixelMap [i][j] = colorPixel (r, objMaterial, surfaceNormal, lights, ambient);     
+                } else {
+                    // If no intersection color the pixel black
+                    pixelMap [i][j] = new RGB(0,0,0);
                 }
             }
         }
-System.out.printf("Max: %.2f Min: %.2f\n", max, min);
-        return image.createHeatMap(tValues, max, min);
+        return img.mapPixels(pixelMap);
     }
 
     /**
@@ -127,103 +133,52 @@ System.out.printf("Max: %.2f Min: %.2f\n", max, min);
     }
 
     /**
-     * Performs ray triangle intersection and returns the distance from the pixel to the triangle.
+     * For each light
+     *  get the vector from the intersection to the light
+     *  get the vector from the intersection to the camera
+     *  if the the light is non-orthogonal to the surface normal:
+     *      diffuse: mat_diffuse * light_brightness * surface_norm.dot(light_vect)
+     *      specular:
+     *          R = (2 * surface_norm.dot(light_vect)) * surface_norm - light_vect
+     *          mat_spec * light_brightness * (camera_vect.dot(R))^phong_const
      */
-    private double intersectTriangle (Face face, Ray ray) {
-        // Before solving check to see if the triangle and ray are parallel
-        Vector AC = new Vector (face.A, face.C);
-        Vector AB = new Vector (face.A, face.B);
-        // If the ray direction is orthogonal to the normal vector of the plane defined by vectors
-        // AB and AC, then the ray is parallel to the triangle
-        if (AC.crossProduct(AB).dotProduct(ray.getDirection()) != 0) {
-            // Solve the matrix equation
-            // Mx = Y
-            SimpleMatrix Mm = generateM (face, ray.getDirection());
-            SimpleMatrix Ym = generateY (face, ray.getOrigin());
-            /**
-             * The solution matrix is in the form
-             * | B | - B is beta
-             * | Y | - Y is gamma
-             * | t | - t is the distance to the face plane
-             */
-            SimpleMatrix solution = Mm.invert().mult(Ym);
-            double beta = solution.get(0,0);
-            double gamma = solution.get(1,0);
-            double t = solution.get(2,0);
-            // If B & Y <= 0, t > 0, and beta + gamma <= 1
-            // Then the ray intersects the triangle
-            if (beta >= 0 && gamma >= 0 && t > 0) {
-                if ((beta + gamma <= 1)) {
-                    return t;
+    private RGB colorPixel (Ray ray, Material material, Vector surfaceNormal, List<Light> lights, Light ambient) {
+        // Ambient
+        // ambient * mat_ambient reflection
+        RGB color = new RGB (0,0,0);
+        if (ambient != null) {
+            color = ambient.getColor().pairwiseProduct(material.ambient);
+        }
+        // To camera ray is the going back on the horse we rode in on
+        Ray toOrig = ray.getReverse();
+        // If the dot product between the camera vector and the surface normal is negative
+        // Then the surface normal is backwards
+        if (toOrig.getDirection().dotProduct(surfaceNormal) < 0) {
+        	surfaceNormal = surfaceNormal.getReverse();
+        } 	
+        for (Light l : lights) {
+            Vector toLightVect = new Vector (ray.getClosestPoint(), l.getPosition());
+            Ray toLight = new Ray (ray.getClosestPoint(), toLightVect);
+            double lDotNorm = toLight.getDirection().dotProduct(surfaceNormal);
+            // Only calculate the illumination if the cos (theta) between the light vector and the surface normal
+            // Is non-negative and non-zero, as a negative cos would denote the light as behind the surface
+            if (lDotNorm > 0) {
+            	// Calculate diffuse reflection
+                color = color.add(material.diffuse.pairwiseProduct(l.getColor()).scale(lDotNorm));
+                // Get the unit length vector for the reflection
+                Vector spR = surfaceNormal.scale(2 * lDotNorm);
+                spR = spR.subtract(toLight.getDirection());
+                spR.makeUnitLength();
+                // Check the angle between the camera vector and the reflection vector
+                double origDotR = toOrig.getDirection().dotProduct(spR);
+                // Only calculate phong reflection if the angle between the two is less than 90 degrees
+                if (origDotR > 0) {
+	                double cdPhong = Math.pow(origDotR, material.phong);
+	                color = color.add(material.specular.pairwiseProduct(l.getColor()).scale(cdPhong));
                 }
             }
         }
-    // We were unable to find an intersection
-    // Return a negative 1 so the calling functions knows we didn't find anything
-    return -1;
-    }
-
-    /**
-     * Generates the matrix M for a triangle with points A, B, C
-     * To solve the matrix equation Mx = Y
-     * | ax - bx  ax - cx  dx | 
-     * | ay - by  ay - cy  dy |
-     * | az - bz  az - cz  dz |
-     */
-     private SimpleMatrix generateM (Face f, Vector d) {
-        SimpleMatrix M = new SimpleMatrix(3,3);
-        // First row
-        M.set(0,0, (f.A.x - f.B.x));
-        M.set(0,1, (f.A.x - f.C.x));
-        M.set(0,2, d.normalized[0]);
-        // Second row
-        M.set(1,0, (f.A.y - f.B.y));
-        M.set(1,1, (f.A.y - f.C.y));
-        M.set(1,2, d.normalized[1]);
-        // Third row
-        M.set(2,0, (f.A.z - f.B.z));
-        M.set(2,1, (f.A.z - f.C.z));
-        M.set(2,2, d.normalized[2]);
-        return M;
-     }
-     /**
-      * Generates the Y matrix in the equation for ray triangle intersection.
-      * | ax - lx |
-      * | ay - ly |
-      * | az - lz |
-      */
-     private SimpleMatrix generateY (Face f, Point l) {
-        SimpleMatrix Y = new SimpleMatrix(3,1);
-        Y.set(0,0, f.A.x - l.x);
-        Y.set(1,0, f.A.y - l.y);
-        Y.set(2,0, f.A.z - l.z);
-        return Y;
-     }
-    
-    /**
-     * Performs ray sphere intersection and returns the distance from the pixel to the sphere.
-     * You can read more about this method in the following link.
-     * https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
-     */
-    private double intersectSphere (Sphere sphere, Ray ray) {
-        // Create a vector from the the eye point to the center of the sphere
-        Vector rayOriginToCenter = new Vector (ray.getOrigin(), sphere.getCenter());
-        // Determine the length of v by using the dot product
-        double v = ray.getDirection().dotProduct(rayOriginToCenter);
-        double vSquared = v * v;
-        // The length of c is the magnitude of ray origin to the center of the sphere
-        double cSquared = rayOriginToCenter.dotProduct(rayOriginToCenter);
-        // d = sqrt (r^2 - (c^2 - v^2))
-        double dSquared = (sphere.getRadius() * sphere.getRadius()) - (cSquared - vSquared);
-        // If d == 0 the ray hits the center of the spehere, otherwise if it is greater than 0
-        //  the ray hits some part of the sphere        
-        if (dSquared >= 0) {
-            double d = Math.sqrt(dSquared);
-            // v - d is the distance from the ray origin to when it first intersects the sphere
-            return v - d;
-        }
-        // If d < 0 then the ray doesn't intersect the sphere
-        return -1;
+        return color;
     }
 
     public String toString() {

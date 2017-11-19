@@ -13,6 +13,7 @@ public class Vector {
     this.direction = temp;
     normalize();
   }
+
   /**
    * Gets the magnitude and creates the normalized vector
    */
@@ -35,7 +36,14 @@ public class Vector {
       this.normalized = temp2;
     }
   }
-
+  
+  /**
+   * Makes this vector unit length
+   */
+  public void makeUnitLength () {
+	  this.direction = this.normalized;
+  }
+ 
   /**
    * Creates a vector pointing from the origin to the given point
    */
@@ -66,6 +74,7 @@ public class Vector {
     Vector v = new Vector(cx, cy, cz);
     return v;
   }
+
   /**
    * Returns the dot product of the two vectors
    */
@@ -87,6 +96,7 @@ public class Vector {
     double z = this.direction[2] + other.direction[2];
     return new Vector (x,y,z);
   }
+
   /**
    * Returns the result of subtracting the two vectors
    */
@@ -96,6 +106,7 @@ public class Vector {
     double z = this.direction[2] - other.direction[2];
     return new Vector (x,y,z);
   }
+
   /**
    * Returns a result of a scaled vector
    */
@@ -143,4 +154,11 @@ public class Vector {
            && (this.magnitude == otherVect.magnitude);
   }
 
+  public Vector getReverse () {
+    double x,y,z;
+    x = -1 * normalized[0];
+    y = -1 * normalized[1];
+    z = -1 * normalized[2];
+    return new Vector (x,y,z);
+  }
 }
