@@ -3,7 +3,7 @@ import org.ejml.simple.SimpleMatrix;
 /**
  * A sphere is denoted by a center point and a radius
  */
-public class Sphere {
+public class Sphere implements Colorable {
     private Point center;
     private double radius;
     private Material material;
@@ -25,6 +25,16 @@ public class Sphere {
             {attenuation.blue}
         };
         attenuation_coeff = new SimpleMatrix (attn);
+    }
+
+    /**
+     * Get the surface normal for a given point the sphere
+     */
+    public Vector getNormal (Point surfacePt) {
+        Point c = getCenter();
+        Vector surfaceNormal = new Vector (c, surfacePt);
+        surfaceNormal.direction = surfaceNormal.normalized;
+        return surfaceNormal;
     }
 
     public Point getCenter () {

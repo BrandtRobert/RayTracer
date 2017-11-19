@@ -3,6 +3,8 @@ import org.ejml.simple.SimpleMatrix;
 
 public class Raytracer {
 
+    private static final String objPath = "./drivers_models/";
+
     public static void main (String args[]) {
         String driverFname = null; 
         String outputFname = null;
@@ -19,7 +21,7 @@ public class Raytracer {
         // Perform each translation and add it to the list of total faces
         for (Transformation t : driver.transformations) {
             // Creating two objectmodels is ineffecienct will lead to memory issues w/ large objects 
-            ObjectModel baseObj = new ObjectModel("" + t.object_name + ".obj");
+            ObjectModel baseObj = new ObjectModel(objPath + t.object_name + ".obj");
             SimpleMatrix trans = Translator.performTranslations
                 (baseObj.getVerticesMatrix(), t.rotation_axis, t.theta, t.scale, t.t_point);
             ObjectModel transObj = new ObjectModel(trans, baseObj);

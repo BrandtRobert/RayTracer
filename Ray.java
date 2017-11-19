@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.List;
 import org.ejml.simple.SimpleMatrix;
 
 public class Ray {
@@ -67,6 +68,43 @@ public class Ray {
      */
     public Ray getReverse () {
         return new Ray (this.origin, this.direction.getReverse());
+    }
+
+    /**
+     * Tests this ray for the closest collision in the scene.
+     * Returns the surface normal for the closest surface to the ray.
+     */
+    public Vector rayTest (List<Sphere> spheres, List<Face> faces) {
+        boolean rayCollided = false;
+        // Try to intersect all faces :/ bleh this is gonna take a long ass time .... 
+        for (Face f : faces) {
+            if (intersectTriangle(f) > 0 ){
+                rayCollided = true;
+            }
+        }
+        // Try to intersect all spheres :/ I am going to be surprised if there's enough memory to render all this shit
+        for (Sphere s : spheres) {
+            if (intersectSphere(s) > 0 ){
+                rayCollided = true;
+            }
+        }
+        Vector surfaceNormal = null;        
+        // If we got a collision calculate the normal
+        if (rayCollided) {
+            Point surfacePt = getClosestPoint();
+            Object closestObj = getClosestObj();
+            // Color the closest object
+            if (closestObj.getClass() == Sphere.class) {
+                // Get normal for sphere
+                Sphere s = (Sphere) closestObj;
+                surfaceNormal = s.getNormal(surfacePt);
+            } else {
+                // Get normal for a face
+                Face face = (Face) closestObj;
+                surfaceNormal = face.getNormal();
+            }
+        }
+        return surfaceNormal;
     }
 
     /**

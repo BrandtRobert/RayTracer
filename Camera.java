@@ -50,9 +50,6 @@ public class Camera {
         top = bnd[3];
         Uv = up.crossProduct(viewPlaneNormal);
         Vv = viewPlaneNormal.crossProduct(Uv);
-        // Vector temp = Uv;
-        // Uv = Vv;
-        // Vv = temp;
         Uv.direction = Uv.normalized;
         Vv.direction = Vv.normalized;
     }
@@ -67,42 +64,12 @@ public class Camera {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
             	Ray r = castRay (i, j , width, height);
-                boolean rayCollided = false;
-                // Try to intersect all faces :/ bleh this is gonna take a long ass time .... 
-                for (Face f : faces) {
-                    if (r.intersectTriangle(f) > 0 ){
-                        rayCollided = true;
-                    }
-                }
-                // Try to intersect all spheres :/ I am going to be surprised if there's enough memory to render all this shit
-                for (Sphere s : spheres) {
-                    if (r.intersectSphere(s) > 0 ){
-                        rayCollided = true;
-                    }
-                }
+                Vector surfaceNormal = r.rayTest(spheres, faces);
                 // If we got a collision calculate the color
-                if (rayCollided) {
-                    Vector surfaceNormal;
-                    Material objMaterial;
-                    Point surfacePt = r.getClosestPoint();
-                    Object closestObj = r.getClosestObj();
-                    // Color the closest object
-                    if (closestObj.getClass() == Sphere.class) {
-                        // Get normal for sphere
-                        Sphere s = (Sphere) closestObj;
-                        Point c = s.getCenter();
-                        surfaceNormal = new Vector (c, surfacePt);
-                        surfaceNormal.direction = surfaceNormal.normalized;
-                        objMaterial = s.getMaterial();
-                    } else {
-                        // Get normal for a face
-                        Face face = (Face) closestObj;
-                        Vector AC = new Vector (face.A, face.C);
-                        Vector AB = new Vector (face.A, face.B);
-                        surfaceNormal = AC.crossProduct(AB);
-                        surfaceNormal.direction = surfaceNormal.normalized;
-                        objMaterial = face.getMaterial();  
-                    }
+                if (surfaceNormal != null) {
+                    // You can do this because the closeset object is either a sphere or face
+                    // They both implement the getMaterial method
+                    Material objMaterial = ((Colorable)r.getClosestObj()).getMaterial();
                     pixelMap [i][j] = colorPixel (r, objMaterial, surfaceNormal, lights, ambient);     
                 } else {
                     // If no intersection color the pixel black
@@ -118,7 +85,7 @@ public class Camera {
      */
     private Ray castRay (double i, double j, double width, double height) {
         // Get the pixel value i,j on the image plane in world coordinates
-        double x = (i / (width - 1)) * (right - left) + left;
+        double x = (i / (width - 1)) * (left - right) + right;        
         double y = (j / (height - 1)) * (top - bottom) + bottom;
         // Pixelpt = Eye + near * Wv (viewplaneNormal) + x * Uv + y * Vv
         Vector W = viewPlaneNormal.scale(near); // near * Wv

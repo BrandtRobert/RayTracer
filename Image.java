@@ -38,7 +38,6 @@ public class Image {
      * Rotate the image into proper place and fill out the pixel values
      */
     public Image mapPixels(RGB [][] pValues) {
-        pValues = verticalMirror(transposeMatrix(pValues));
         // Yeah you have to reset these i don't even care anymore
         this.width = pValues[0].length;
         this.height = pValues.length;
@@ -51,21 +50,6 @@ public class Image {
         return this;
     }
 
-    private static RGB[][] transposeMatrix(RGB [][] m){
-        RGB[][] temp = new RGB[m[0].length][m.length];
-        for (int i = 0; i < m.length; i++)
-            for (int j = 0; j < m[0].length; j++)
-                temp[j][i] = m[i][j];
-        return temp;
-    }
-
-    private static RGB[][] verticalMirror(RGB [][] m) {
-        RGB[][] temp = new RGB[m.length][m[0].length];
-        for (int i = m.length - 1, k = 0; i >= 0; i--, k++)
-            for (int j = 0; j < m[0].length; j++)
-                temp[k][j] = m[i][j];
-        return temp;
-    }
     /**
      * Writes this image to an output file of a given name.
      * Format is ACSII PPM:

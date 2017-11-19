@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectModel {
-  private static final String matlib_path = "";
+  private static final String matlib_path = "./drivers_models/";
   // The set abstraction is used, because theoretically two equal vertices does nothing.
   private String name;
   // vertices
