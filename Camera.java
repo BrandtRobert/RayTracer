@@ -122,7 +122,12 @@ public class Camera {
         // Then the surface normal is backwards
         if (toOrig.getDirection().dotProduct(surfaceNormal) < 0) {
         	surfaceNormal = surfaceNormal.getReverse();
-        } 	
+        }
+        /**
+         * @TODO
+         * Shadows? Fire a ray from the light to the pt of intersection. (i.e. closestPt of the ray)
+         * If there is some object that is in between then we know that the light is obstructed
+         */
         for (Light l : lights) {
             Vector toLightVect = new Vector (ray.getClosestPoint(), l.getPosition());
             Ray toLight = new Ray (ray.getClosestPoint(), toLightVect);
