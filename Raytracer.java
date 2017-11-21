@@ -29,9 +29,8 @@ public class Raytracer {
             System.out.printf("Placing object '%s'...\n", baseObj.getName());
         }
         System.out.println("Placing camera and rendering scene...");
-        // for (Face f : allObjectFaces)
-            // System.out.println(f.material);
-        Image img = driver.cameraModel.generateImage(allObjectFaces, driver.spheres, driver.lights, driver.ambient, driver.resWidth, driver.resHeight);
+        Scene scene = new Scene (driver.cameraModel, allObjectFaces, driver.spheres, driver.lights, driver.ambient);
+        Image img = scene.generateImage(driver.resWidth, driver.resHeight, driver.recurDepth);
         System.out.printf("Writing scene to '%s'...\n", outputFname);
         img.writeToFile(outputFname);
         System.out.println("Done!");

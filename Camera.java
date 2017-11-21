@@ -18,18 +18,17 @@ import org.ejml.simple.SimpleMatrix;
  */
 
 public class Camera {
-    Point eyePoint, lookatPoint;
-    Vector upVector, viewPlaneNormal;
+    public Point eyePoint, lookatPoint;
+    public Vector upVector, viewPlaneNormal;
     // Image plan bounds (left, right, bottom, top)
-    double right;
-    double left;
-    double bottom;
-    double top;
+    public double right;
+    public double left;
+    public double bottom;
+    public double top;
     // How far the bounded image plane is from the camera
-    double near;
+    public double near;
     // The horizontal and vertical vectors
-    Vector Uv, Vv;
-
+    public Vector Uv, Vv;
     // Bnd contains integer values denoting the bounded image plane
     // In this order: left, bottom, right, top
     public Camera (Point e, Point l, Vector up, double [] bnd, double near) {
@@ -52,105 +51,6 @@ public class Camera {
         Vv = viewPlaneNormal.crossProduct(Uv);
         Uv.direction = Uv.normalized;
         Vv.direction = Vv.normalized;
-    }
-
-    /**
-     * Renders a distance heat map for an object with width x height resolution
-     */
-    public Image generateImage (List<Face> faces, List<Sphere> spheres, List<Light> lights, Light ambient, int width, int height) {
-        Image img = new Image (width, height);
-        RGB [][] pixelMap = new RGB [width][height];
-        // For each pixel cast a ray, and see what it hits
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-            	Ray r = castRay (i, j , width, height);
-                Vector surfaceNormal = r.rayTest(spheres, faces);
-                // If we got a collision calculate the color
-                if (surfaceNormal != null) {
-                    // You can do this because the closeset object is either a sphere or face
-                    // They both implement the getMaterial method
-                    Material objMaterial = ((Colorable)r.getClosestObj()).getMaterial();
-                    pixelMap [i][j] = colorPixel (r, objMaterial, surfaceNormal, lights, ambient);     
-                } else {
-                    // If no intersection color the pixel black
-                    pixelMap [i][j] = new RGB(0,0,0);
-                }
-            }
-        }
-        return img.mapPixels(pixelMap);
-    }
-
-    /**
-     * Returns an ray cast from the eye point onto a pixel i, j in the image plane
-     */
-    private Ray castRay (double i, double j, double width, double height) {
-        // Get the pixel value i,j on the image plane in world coordinates
-        double x = (i / (width - 1)) * (left - right) + right;        
-        double y = (j / (height - 1)) * (top - bottom) + bottom;
-        // Pixelpt = Eye + near * Wv (viewplaneNormal) + x * Uv + y * Vv
-        Vector W = viewPlaneNormal.scale(near); // near * Wv
-        Vector Uscaled = Uv.scale(x);           // x * Uv
-        Vector Vscaled = Vv.scale(y);           // y * Vv
-        Vector eyeVect = eyePoint.toVector();
-        // A ray is a point and direction
-        Point pixelPoint = eyeVect.add(W).add(Uscaled).add(Vscaled).toPoint();
-        Vector direction = new Vector (eyePoint, pixelPoint);
-        Ray newRay = new Ray (pixelPoint, direction);
-        return newRay;
-    }
-
-    /**
-     * For each light
-     *  get the vector from the intersection to the light
-     *  get the vector from the intersection to the camera
-     *  if the the light is non-orthogonal to the surface normal:
-     *      diffuse: mat_diffuse * light_brightness * surface_norm.dot(light_vect)
-     *      specular:
-     *          R = (2 * surface_norm.dot(light_vect)) * surface_norm - light_vect
-     *          mat_spec * light_brightness * (camera_vect.dot(R))^phong_const
-     */
-    private RGB colorPixel (Ray ray, Material material, Vector surfaceNormal, List<Light> lights, Light ambient) {
-        // Ambient
-        // ambient * mat_ambient reflection
-        RGB color = new RGB (0,0,0);
-        if (ambient != null) {
-            color = ambient.getColor().pairwiseProduct(material.ambient);
-        }
-        // To camera ray is the going back on the horse we rode in on
-        Ray toOrig = ray.getReverse();
-        // If the dot product between the camera vector and the surface normal is negative
-        // Then the surface normal is backwards
-        if (toOrig.getDirection().dotProduct(surfaceNormal) < 0) {
-        	surfaceNormal = surfaceNormal.getReverse();
-        }
-        /**
-         * @TODO
-         * Shadows? Fire a ray from the light to the pt of intersection. (i.e. closestPt of the ray)
-         * If there is some object that is in between then we know that the light is obstructed
-         */
-        for (Light l : lights) {
-            Vector toLightVect = new Vector (ray.getClosestPoint(), l.getPosition());
-            Ray toLight = new Ray (ray.getClosestPoint(), toLightVect);
-            double lDotNorm = toLight.getDirection().dotProduct(surfaceNormal);
-            // Only calculate the illumination if the cos (theta) between the light vector and the surface normal
-            // Is non-negative and non-zero, as a negative cos would denote the light as behind the surface
-            if (lDotNorm > 0) {
-            	// Calculate diffuse reflection
-                color = color.add(material.diffuse.pairwiseProduct(l.getColor()).scale(lDotNorm));
-                // Get the unit length vector for the reflection
-                Vector spR = surfaceNormal.scale(2 * lDotNorm);
-                spR = spR.subtract(toLight.getDirection());
-                spR.makeUnitLength();
-                // Check the angle between the camera vector and the reflection vector
-                double origDotR = toOrig.getDirection().dotProduct(spR);
-                // Only calculate phong reflection if the angle between the two is less than 90 degrees
-                if (origDotR > 0) {
-	                double cdPhong = Math.pow(origDotR, material.phong);
-	                color = color.add(material.specular.pairwiseProduct(l.getColor()).scale(cdPhong));
-                }
-            }
-        }
-        return color;
     }
 
     public String toString() {

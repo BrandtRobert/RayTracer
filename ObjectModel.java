@@ -90,6 +90,7 @@ public class ObjectModel {
     // cube.obj --> ["cube", "obj"]
     newObject.name = fname;
     Material current_material = null;
+    List<Material> matList = new ArrayList<Material>();
     try {
       Scanner fReader = new Scanner(new File(fname));
       int lineCount = 0;
@@ -139,7 +140,14 @@ public class ObjectModel {
             // newObject.smoothing = false; ??
           } else if (lineItems[0].equals("mtllib")) {
             // Set the current material
-            current_material = Material.fromFile(matlib_path + lineItems[1]);
+            matList = Material.fromFile(matlib_path + lineItems[1]);
+          } else if (lineItems[0].equals("usemtl")) {
+            String matName = lineItems[1];
+            for (Material m : matList) {
+              if (m.name.equalsIgnoreCase(matName)) {
+                current_material = m;
+              }
+            }
           } else {
             // unrecognized symbol, ignore
             System.err.printf("Unrecognized symbol '%s' in '%s'\n\tLine %d: %s", lineItems[0], fname, lineCount, line);

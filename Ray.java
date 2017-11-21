@@ -134,7 +134,7 @@ public class Ray {
             double t = solution.get(2,0);
             // If B & Y <= 0, t > 0, and beta + gamma <= 1
             // Then the ray intersects the triangle
-            if (beta >= 0 && gamma >= 0 && t > 0) {
+            if (beta >= 0 && gamma >= 0 && t > 0.0001) {
                 if ((beta + gamma <= 1)) {
                     // If t is closer than any other obj set t to the value
                     if (t < ray.closestDist) {
@@ -173,7 +173,7 @@ public class Ray {
             // v - d is the distance from the ray origin to when it first intersects the sphere
             double t = v - d;
             // If t is closer than any other obj set t to the value            
-            if (t < ray.closestDist) {
+            if (t < ray.closestDist && t > 0.0001) {
                 ray.closestDist = t;
                 ray.closestObj = sphere;
             }

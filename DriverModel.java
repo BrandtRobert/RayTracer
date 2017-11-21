@@ -10,7 +10,7 @@ public class DriverModel {
     Light ambient;
     List<Light> lights;
     Camera cameraModel;
-    int resWidth, resHeight;
+    int resWidth, resHeight, recurDepth;
 
     private static class InvalidModelException extends Exception {
 		private static final long serialVersionUID = 1L;
@@ -121,6 +121,8 @@ public class DriverModel {
                     double b = Double.parseDouble(lineItems[7]);
                     Light l = new Light (new RGB(r,g,b), new Point(x,y,z), w);
                     lights.add(l);
+                } else if (lineItems[0].equalsIgnoreCase("recursionLevel")) {
+                    recurDepth = Integer.parseInt(lineItems[1]);
                 } else {
                     throw new InvalidModelException("Unable to recognize phrase '" + lineItems[0] + "'");
                 }
