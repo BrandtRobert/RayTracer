@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import org.ejml.simple.SimpleMatrix;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ObjectModel {
@@ -123,9 +124,9 @@ public class ObjectModel {
           } else if (lineItems[0].equals("f")) {
             // f 2//1 4//1 1//1
             // Get the indices for each vertex that makes up the face
-            int av_index = Integer.parseInt(lineItems[1].split("//")[0]);
-            int bv_index = Integer.parseInt(lineItems[2].split("//")[0]);
-            int cv_index = Integer.parseInt(lineItems[3].split("//")[0]);
+            int av_index = Integer.parseInt(lineItems[1].split("/")[0]);
+            int bv_index = Integer.parseInt(lineItems[2].split("/")[0]);
+            int cv_index = Integer.parseInt(lineItems[3].split("/")[0]);
             // Save a list to back track what the indices are when you write the file back out
             int [] indices = {av_index, bv_index, cv_index};
             // Get the point for each vertex index, have to do -1 because the file is 1 indexed instead of 0 indexed

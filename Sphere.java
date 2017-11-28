@@ -18,13 +18,7 @@ public class Sphere implements Colorable {
     public Sphere (Point c, double r, RGB ambient, RGB diffuse, RGB specular, RGB attenuation) {
         center = c;
         radius = r;
-        material = new Material (ambient, diffuse, specular);
-        double attn [][] = {
-            {attenuation.red},
-            {attenuation.green},
-            {attenuation.blue}
-        };
-        attenuation_coeff = new SimpleMatrix (attn);
+        material = new Material (ambient, diffuse, specular, attenuation, 16, "sphere");
     }
 
     /**

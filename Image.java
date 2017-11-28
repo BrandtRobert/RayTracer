@@ -38,7 +38,7 @@ public class Image {
      * Rotate the image into proper place and fill out the pixel values
      */
     public Image mapPixels(RGB [][] pValues) {
-        pValues = verticalMirror(transposeMatrix(pValues));
+//        pValues = verticalMirror(transposeMatrix(pValues));
         // Yeah you have to reset these i don't even care anymore
         this.width = pValues[0].length;
         this.height = pValues.length;

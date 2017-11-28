@@ -76,6 +76,7 @@ public class Material {
                             }
                     	}
                     	matList.add(new Material(ambient, diffuse, specular, attenuation, p, materialName));
+                    	attenuation = new RGB (1,1,1);
                     }
                 }
             }

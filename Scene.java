@@ -38,8 +38,8 @@ public class Scene {
      */
     private Ray castRay (double i, double j, double width, double height) {
         // Get the pixel value i,j on the image plane in world coordinates
-        double x = (i / (width - 1)) * (camera.right - camera.left) + camera.left;        
-        double y = (j / (height - 1)) * (camera.top - camera.bottom) + camera.bottom;
+        double y = (i / (width - 1)) * (camera.left - camera.right) + camera.right;        
+        double x = (j / (height - 1)) * (camera.top - camera.bottom) + camera.bottom;
         // Pixelpt = Eye + near * Wv (viewplaneNormal) + x * Uv + y * Vv
         Vector W = camera.viewPlaneNormal.scale(camera.near); // near * Wv
         Vector Uscaled = camera.Uv.scale(x);           // x * Uv
@@ -115,6 +115,8 @@ public class Scene {
                 }
             }
         }
+        // Attenuate
+        color = color.pairwiseProduct(material.attenuation);
         // Ray trace
         RGB raytrace = null;
         if (depth > 0) {

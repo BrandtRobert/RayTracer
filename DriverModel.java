@@ -10,7 +10,7 @@ public class DriverModel {
     Light ambient;
     List<Light> lights;
     Camera cameraModel;
-    int resWidth, resHeight, recurDepth;
+    int resWidth, resHeight, recurDepth = 0;
 
     private static class InvalidModelException extends Exception {
 		private static final long serialVersionUID = 1L;
