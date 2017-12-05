@@ -3,6 +3,8 @@ import org.ejml.simple.SimpleMatrix;
 
 public class Raytracer {
 
+    private static final String objPath = "./drivers_models/";
+
     public static void main (String args[]) {
         String driverFname = null; 
         String outputFname = null;
@@ -19,7 +21,7 @@ public class Raytracer {
         // Perform each translation and add it to the list of total faces
         for (Transformation t : driver.transformations) {
             // Creating two objectmodels is ineffecienct will lead to memory issues w/ large objects 
-            ObjectModel baseObj = new ObjectModel("" + t.object_name + ".obj");
+            ObjectModel baseObj = new ObjectModel(objPath + t.object_name + ".obj");
             SimpleMatrix trans = Translator.performTranslations
                 (baseObj.getVerticesMatrix(), t.rotation_axis, t.theta, t.scale, t.t_point);
             ObjectModel transObj = new ObjectModel(trans, baseObj);
@@ -27,9 +29,8 @@ public class Raytracer {
             System.out.printf("Placing object '%s'...\n", baseObj.getName());
         }
         System.out.println("Placing camera and rendering scene...");
-        // for (Face f : allObjectFaces)
-            // System.out.println(f.material);
-        Image img = driver.cameraModel.generateImage(allObjectFaces, driver.spheres, driver.lights, driver.ambient, driver.resWidth, driver.resHeight);
+        Scene scene = new Scene (driver.cameraModel, allObjectFaces, driver.spheres, driver.lights, driver.ambient);
+        Image img = scene.generateImage(driver.resWidth, driver.resHeight, driver.recurDepth);
         System.out.printf("Writing scene to '%s'...\n", outputFname);
         img.writeToFile(outputFname);
         System.out.println("Done!");

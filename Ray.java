@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.List;
 import org.ejml.simple.SimpleMatrix;
 
 public class Ray {
@@ -70,6 +71,43 @@ public class Ray {
     }
 
     /**
+     * Tests this ray for the closest collision in the scene.
+     * Returns the surface normal for the closest surface to the ray.
+     */
+    public Vector rayTest (List<Sphere> spheres, List<Face> faces) {
+        boolean rayCollided = false;
+        // Try to intersect all faces :/ bleh this is gonna take a long ass time .... 
+        for (Face f : faces) {
+            if (intersectTriangle(f) > 0 ){
+                rayCollided = true;
+            }
+        }
+        // Try to intersect all spheres :/ I am going to be surprised if there's enough memory to render all this shit
+        for (Sphere s : spheres) {
+            if (intersectSphere(s) > 0 ){
+                rayCollided = true;
+            }
+        }
+        Vector surfaceNormal = null;        
+        // If we got a collision calculate the normal
+        if (rayCollided) {
+            Point surfacePt = getClosestPoint();
+            Object closestObj = getClosestObj();
+            // Color the closest object
+            if (closestObj.getClass() == Sphere.class) {
+                // Get normal for sphere
+                Sphere s = (Sphere) closestObj;
+                surfaceNormal = s.getNormal(surfacePt);
+            } else {
+                // Get normal for a face
+                Face face = (Face) closestObj;
+                surfaceNormal = face.getNormal();
+            }
+        }
+        return surfaceNormal;
+    }
+
+    /**
      * Performs ray triangle intersection and returns the distance from the pixel to the triangle.
      */
     public double intersectTriangle (Face face) {
@@ -96,7 +134,7 @@ public class Ray {
             double t = solution.get(2,0);
             // If B & Y <= 0, t > 0, and beta + gamma <= 1
             // Then the ray intersects the triangle
-            if (beta >= 0 && gamma >= 0 && t > 0) {
+            if (beta >= 0 && gamma >= 0 && t > 0.0001) {
                 if ((beta + gamma <= 1)) {
                     // If t is closer than any other obj set t to the value
                     if (t < ray.closestDist) {
@@ -135,7 +173,7 @@ public class Ray {
             // v - d is the distance from the ray origin to when it first intersects the sphere
             double t = v - d;
             // If t is closer than any other obj set t to the value            
-            if (t < ray.closestDist) {
+            if (t < ray.closestDist && t > 0.0001) {
                 ray.closestDist = t;
                 ray.closestObj = sphere;
             }

@@ -7,6 +7,8 @@ public class Vector {
   public double magnitude;
   // The vector as unit length
   public double [] normalized;
+  // The origin of the vector
+  public Point origin;
 
   public Vector (double x, double y, double z) {
     double [] temp = {x, y, z};

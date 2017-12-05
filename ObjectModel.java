@@ -4,10 +4,11 @@ import java.io.FileNotFoundException;
 import org.ejml.simple.SimpleMatrix;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ObjectModel {
-  private static final String matlib_path = "";
+  private static final String matlib_path = "./drivers_models/";
   // The set abstraction is used, because theoretically two equal vertices does nothing.
   private String name;
   // vertices
@@ -90,6 +91,7 @@ public class ObjectModel {
     // cube.obj --> ["cube", "obj"]
     newObject.name = fname;
     Material current_material = null;
+    List<Material> matList = new ArrayList<Material>();
     try {
       Scanner fReader = new Scanner(new File(fname));
       int lineCount = 0;
@@ -122,9 +124,9 @@ public class ObjectModel {
           } else if (lineItems[0].equals("f")) {
             // f 2//1 4//1 1//1
             // Get the indices for each vertex that makes up the face
-            int av_index = Integer.parseInt(lineItems[1].split("//")[0]);
-            int bv_index = Integer.parseInt(lineItems[2].split("//")[0]);
-            int cv_index = Integer.parseInt(lineItems[3].split("//")[0]);
+            int av_index = Integer.parseInt(lineItems[1].split("/")[0]);
+            int bv_index = Integer.parseInt(lineItems[2].split("/")[0]);
+            int cv_index = Integer.parseInt(lineItems[3].split("/")[0]);
             // Save a list to back track what the indices are when you write the file back out
             int [] indices = {av_index, bv_index, cv_index};
             // Get the point for each vertex index, have to do -1 because the file is 1 indexed instead of 0 indexed
@@ -139,7 +141,14 @@ public class ObjectModel {
             // newObject.smoothing = false; ??
           } else if (lineItems[0].equals("mtllib")) {
             // Set the current material
-            current_material = Material.fromFile(matlib_path + lineItems[1]);
+            matList = Material.fromFile(matlib_path + lineItems[1]);
+          } else if (lineItems[0].equals("usemtl")) {
+            String matName = lineItems[1];
+            for (Material m : matList) {
+              if (m.name.equalsIgnoreCase(matName)) {
+                current_material = m;
+              }
+            }
           } else {
             // unrecognized symbol, ignore
             System.err.printf("Unrecognized symbol '%s' in '%s'\n\tLine %d: %s", lineItems[0], fname, lineCount, line);
